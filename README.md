@@ -4,14 +4,15 @@ A Retrieval-Augmented Generation (RAG) system designed to answer questions about
 
 ## Overview
 
-This application is a full-stack web application that enables users to query course materials and receive intelligent, context-aware responses. It uses ChromaDB for vector storage, Anthropic's Claude for AI generation, and provides a web interface for interaction.
+This application is a full-stack web application that enables users to query course materials and receive intelligent, context-aware responses. It uses ChromaDB for vector storage, AWS Bedrock Claude models for AI generation, and provides a web interface for interaction.
 
 
 ## Prerequisites
 
 - Python 3.13 or higher
 - uv (Python package manager)
-- An Anthropic API key (for Claude AI)
+- AWS CLI configured with credentials that have Bedrock access
+- AWS Bedrock Claude model access in your region
 - **For Windows**: Use Git Bash to run the application commands - [Download Git for Windows](https://git-scm.com/downloads/win)
 
 ## Installation
@@ -26,11 +27,18 @@ This application is a full-stack web application that enables users to query cou
    uv sync
    ```
 
-3. **Set up environment variables**
-   
-   Create a `.env` file in the root directory:
+3. **Configure AWS credentials and environment**
+
+   First, configure AWS credentials:
    ```bash
-   ANTHROPIC_API_KEY=your_anthropic_api_key_here
+   aws configure
+   ```
+
+   Then create a `.env` file in the root directory:
+   ```bash
+   AWS_REGION=us-east-1
+   # Optional: Override default model
+   # BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20241022-v2:0
    ```
 
 ## Running the Application

@@ -8,9 +8,9 @@ load_dotenv()
 @dataclass
 class Config:
     """Configuration settings for the RAG system"""
-    # Anthropic API settings
-    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-    ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
+    # AWS Bedrock settings
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
+    BEDROCK_MODEL_ID: str = os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20241022-v2:0")
     
     # Embedding model settings
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
