@@ -37,6 +37,21 @@ cp .env.example .env
 # 3. IAM roles (for EC2/ECS/Lambda deployment)
 ```
 
+### Testing
+```bash
+# Run all tests
+uv run pytest backend/tests/ -v
+
+# Run specific test file
+uv run pytest backend/tests/test_search_tools.py -v
+
+# Run tests with coverage
+uv run pytest backend/tests/ --cov=backend --cov-report=html
+
+# Run tests in verbose mode with short traceback
+uv run pytest backend/tests/ -v --tb=short
+```
+
 ## Architecture Overview
 
 This is a **Retrieval-Augmented Generation (RAG) system** for course materials with the following architecture:
@@ -126,3 +141,4 @@ The frontend (`frontend/`) contains vanilla HTML/CSS/JavaScript that:
 - Two separate collections for metadata vs. content enable flexible querying
 - Course titles used as unique identifiers
 - Duplicate detection prevents re-processing existing courses
+- I'll start server myself, so Claude should never start run run.sh

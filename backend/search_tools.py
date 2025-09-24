@@ -19,10 +19,11 @@ class Tool(ABC):
 
 class CourseSearchTool(Tool):
     """Tool for searching course content with semantic course name matching"""
-    
+
     def __init__(self, vector_store: VectorStore):
         self.store = vector_store
         self.last_sources = []  # Track sources from last search
+        self.last_source_metadata = []  # Track detailed source metadata
     
     def get_tool_definition(self) -> Dict[str, Any]:
         """Return Anthropic tool definition for this tool"""
@@ -89,28 +90,45 @@ class CourseSearchTool(Tool):
         """Format search results with course and lesson context"""
         formatted = []
         sources = []  # Track sources for the UI
-        
+        source_metadata = []  # Track detailed metadata for the UI
+
         for doc, meta in zip(results.documents, results.metadata):
             course_title = meta.get('course_title', 'unknown')
             lesson_num = meta.get('lesson_number')
-            
-            # Build context header
+
+            # Build context header (no HTML comments embedded)
             header = f"[{course_title}"
             if lesson_num is not None:
                 header += f" - Lesson {lesson_num}"
             header += "]"
-            
+
             # Track source for the UI
             source = course_title
             if lesson_num is not None:
                 source += f" - Lesson {lesson_num}"
             sources.append(source)
-            
+
+            # Build metadata for clickable links
+            metadata = {
+                "name": source,
+                "course": course_title,
+                "lesson": lesson_num,
+                "link": None
+            }
+
+            # Get lesson link if available
+            if lesson_num is not None and course_title != 'unknown':
+                lesson_link = self.store.get_lesson_link(course_title, lesson_num)
+                if lesson_link:
+                    metadata["link"] = lesson_link
+
+            source_metadata.append(metadata)
             formatted.append(f"{header}\n{doc}")
-        
-        # Store sources for retrieval
+
+        # Store sources and metadata for retrieval
         self.last_sources = sources
-        
+        self.last_source_metadata = source_metadata
+
         return "\n\n".join(formatted)
 
 class ToolManager:
@@ -147,8 +165,18 @@ class ToolManager:
                 return tool.last_sources
         return []
 
+    def get_last_source_metadata(self) -> list:
+        """Get detailed source metadata from the last search operation"""
+        # Check all tools for last_source_metadata attribute
+        for tool in self.tools.values():
+            if hasattr(tool, 'last_source_metadata') and tool.last_source_metadata:
+                return tool.last_source_metadata
+        return []
+
     def reset_sources(self):
         """Reset sources from all tools that track sources"""
         for tool in self.tools.values():
             if hasattr(tool, 'last_sources'):
                 tool.last_sources = []
+            if hasattr(tool, 'last_source_metadata'):
+                tool.last_source_metadata = []

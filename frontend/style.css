@@ -220,29 +220,85 @@ header h1 {
 
 /* Collapsible Sources */
 .sources-collapsible {
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
     font-size: 0.75rem;
     color: var(--text-secondary);
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
 .sources-collapsible summary {
     cursor: pointer;
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem 0.75rem;
     user-select: none;
-    font-weight: 500;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    color: var(--primary-color);
 }
 
 .sources-collapsible summary:hover {
     color: var(--text-primary);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .sources-collapsible[open] summary {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 8px 8px 0 0;
 }
 
 .sources-content {
-    padding: 0 0.5rem 0.25rem 1.5rem;
+    padding: 0.5rem 0.75rem 0.75rem 0.75rem;
     color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Source Links Styling */
+.sources-content a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    margin: 0.125rem;
+    border-radius: 6px;
+    background: rgba(96, 165, 250, 0.1);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    display: inline-block;
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+}
+
+.sources-content a:hover {
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.2);
+    border-color: rgba(96, 165, 250, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(96, 165, 250, 0.2);
+}
+
+.sources-content a:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(96, 165, 250, 0.2);
+}
+
+.sources-content a:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
+}
+
+/* Non-linked source text styling */
+.sources-content .source-text {
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    margin: 0.125rem;
+    border-radius: 6px;
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    display: inline-block;
+    font-size: 0.8rem;
 }
 
 /* Markdown formatting styles */
