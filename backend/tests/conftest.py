@@ -295,6 +295,178 @@ def ai_generator_test_cases():
     ]
 
 
+# API Testing Fixtures
+
+@pytest.fixture
+def mock_rag_system():
+    """Mock RAG system for API testing"""
+    mock_rag = Mock()
+
+    # Mock session manager
+    mock_session_manager = Mock()
+    mock_session_manager.create_session.return_value = "test-session-123"
+    mock_rag.session_manager = mock_session_manager
+
+    # Mock query method
+    mock_rag.query.return_value = (
+        "This is a test response about Python variables.",
+        ["Python Programming Basics - Lesson 1"],
+        [
+            {
+                "name": "Python Programming Basics - Lesson 1",
+                "course": "Python Programming Basics",
+                "lesson": 1,
+                "link": "https://example.com/lesson1"
+            }
+        ]
+    )
+
+    # Mock course analytics
+    mock_rag.get_course_analytics.return_value = {
+        "total_courses": 2,
+        "course_titles": ["Python Programming Basics", "Advanced Python"]
+    }
+
+    return mock_rag
+
+
+@pytest.fixture
+def test_app(mock_rag_system):
+    """Create test FastAPI app without static file mounting issues"""
+    from fastapi import FastAPI, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.middleware.trustedhost import TrustedHostMiddleware
+    from pydantic import BaseModel
+    from typing import List, Optional
+
+    # Create test app
+    app = FastAPI(title="Test Course Materials RAG System")
+
+    # Add middleware
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+
+    # Pydantic models (inline to avoid import issues)
+    class QueryRequest(BaseModel):
+        query: str
+        session_id: Optional[str] = None
+
+    class SourceMetadata(BaseModel):
+        name: str
+        course: str
+        lesson: Optional[int] = None
+        link: Optional[str] = None
+
+    class QueryResponse(BaseModel):
+        answer: str
+        sources: List[str]
+        source_metadata: List[SourceMetadata]
+        session_id: str
+
+    class CourseStats(BaseModel):
+        total_courses: int
+        course_titles: List[str]
+
+    # API endpoints
+    @app.post("/api/query", response_model=QueryResponse)
+    async def query_documents(request: QueryRequest):
+        try:
+            session_id = request.session_id
+            if not session_id:
+                session_id = mock_rag_system.session_manager.create_session()
+
+            answer, sources, source_metadata = mock_rag_system.query(request.query, session_id)
+            metadata_models = [SourceMetadata(**meta) for meta in source_metadata]
+
+            return QueryResponse(
+                answer=answer,
+                sources=sources,
+                source_metadata=metadata_models,
+                session_id=session_id
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/courses", response_model=CourseStats)
+    async def get_course_stats():
+        try:
+            analytics = mock_rag_system.get_course_analytics()
+            return CourseStats(
+                total_courses=analytics["total_courses"],
+                course_titles=analytics["course_titles"]
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return app
+
+
+@pytest.fixture
+def client(test_app):
+    """Create test client for API testing"""
+    from fastapi.testclient import TestClient
+    return TestClient(test_app)
+
+
+@pytest.fixture
+async def async_client(test_app):
+    """Create async test client for API testing"""
+    from httpx import AsyncClient
+    async with AsyncClient(app=test_app, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest.fixture
+def sample_query_request():
+    """Sample query request for API testing"""
+    return {
+        "query": "What are Python variables?",
+        "session_id": "test-session-123"
+    }
+
+
+@pytest.fixture
+def sample_query_request_no_session():
+    """Sample query request without session ID"""
+    return {
+        "query": "What are Python data types?"
+    }
+
+
+@pytest.fixture
+def expected_query_response():
+    """Expected query response for API testing"""
+    return {
+        "answer": "This is a test response about Python variables.",
+        "sources": ["Python Programming Basics - Lesson 1"],
+        "source_metadata": [
+            {
+                "name": "Python Programming Basics - Lesson 1",
+                "course": "Python Programming Basics",
+                "lesson": 1,
+                "link": "https://example.com/lesson1"
+            }
+        ],
+        "session_id": "test-session-123"
+    }
+
+
+@pytest.fixture
+def expected_course_stats():
+    """Expected course statistics response"""
+    return {
+        "total_courses": 2,
+        "course_titles": ["Python Programming Basics", "Advanced Python"]
+    }
+
+
 # Utility functions for test setup
 def setup_mock_chroma_results(documents: List[str], metadata: List[Dict], distances: List[float]):
     """Helper to create mock ChromaDB results"""
