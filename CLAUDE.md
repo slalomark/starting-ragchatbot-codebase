@@ -52,6 +52,28 @@ uv run pytest backend/tests/ --cov=backend --cov-report=html
 uv run pytest backend/tests/ -v --tb=short
 ```
 
+### Code Quality
+
+```bash
+# Format code with black and ruff
+./scripts/format.sh
+
+# Run linting checks
+./scripts/lint.sh
+
+# Run comprehensive quality checks (lint + tests + coverage)
+./scripts/quality.sh
+
+# Pre-commit checks (format + lint + tests)
+./scripts/pre-commit.sh
+
+# Manual commands
+uv run black backend/                    # Format code
+uv run ruff check backend/ --fix        # Fix auto-fixable issues
+uv run ruff check backend/              # Check for issues
+uv run black --check backend/           # Check formatting
+```
+
 ## Architecture Overview
 
 This is a **Retrieval-Augmented Generation (RAG) system** for course materials with the following architecture:

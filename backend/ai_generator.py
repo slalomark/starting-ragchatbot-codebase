@@ -1,7 +1,9 @@
-import boto3
 import json
-from typing import List, Optional, Dict, Any
+from typing import Any
+
+import boto3
 from botocore.exceptions import ClientError
+
 
 class AIGenerator:
     """Handles interactions with AWS Bedrock Claude models for generating responses"""
@@ -36,22 +38,19 @@ Provide only the direct answer to what was asked.
 """
 
     def __init__(self, aws_region: str, model_id: str):
-        self.bedrock_client = boto3.client(
-            'bedrock-runtime',
-            region_name=aws_region
-        )
+        self.bedrock_client = boto3.client("bedrock-runtime", region_name=aws_region)
         self.model_id = model_id
 
         # Pre-build base inference parameters
-        self.base_params = {
-            "temperature": 0,
-            "max_tokens": 800
-        }
+        self.base_params = {"temperature": 0, "max_tokens": 800}
 
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None) -> str:
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: str | None = None,
+        tools: list | None = None,
+        tool_manager=None,
+    ) -> str:
         """
         Generate AI response with sequential tool calling support (up to 2 rounds).
 
@@ -68,7 +67,7 @@ Provide only the direct answer to what was asked.
         max_rounds = 2
 
         # Loop through up to 2 rounds of tool calling
-        for round_num in range(max_rounds):
+        for _round_num in range(max_rounds):
             # Make API call for this round
             response = self._make_api_call(messages, tools, conversation_history)
 
@@ -85,14 +84,20 @@ Provide only the direct answer to what was asked.
                 return "Sorry, I encountered an error with the search tool. Please try again."
 
         # After max rounds, make final call without tools
-        final_response = self._make_api_call(messages, tools=None, conversation_history=conversation_history)
+        final_response = self._make_api_call(
+            messages, tools=None, conversation_history=conversation_history
+        )
         if final_response is None:
             return "Sorry, I encountered an error processing your request. Please try again."
 
         return self._extract_text_response(final_response)
 
-
-    def _make_api_call(self, messages: List[Dict], tools: Optional[List] = None, conversation_history: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def _make_api_call(
+        self,
+        messages: list[dict],
+        tools: list | None = None,
+        conversation_history: str | None = None,
+    ) -> dict[str, Any] | None:
         """
         Make a single API call to Bedrock.
 
@@ -116,7 +121,7 @@ Provide only the direct answer to what was asked.
             "anthropic_version": "bedrock-2023-05-31",
             "system": system_content,
             "messages": messages,
-            **self.base_params
+            **self.base_params,
         }
 
         # Add tools if available
@@ -129,17 +134,19 @@ Provide only the direct answer to what was asked.
             response = self.bedrock_client.invoke_model(
                 modelId=self.model_id,
                 body=json.dumps(request_body),
-                contentType='application/json'
+                contentType="application/json",
             )
 
             # Parse and return the response
-            return json.loads(response['body'].read())
+            return json.loads(response["body"].read())
 
         except ClientError as e:
             print(f"Error calling Bedrock: {e}")
             return None
 
-    def _process_tool_round(self, messages: List[Dict], response: Dict[str, Any], tool_manager) -> Optional[List[Dict]]:
+    def _process_tool_round(
+        self, messages: list[dict], response: dict[str, Any], tool_manager
+    ) -> list[dict] | None:
         """
         Execute tools and update message history for next round.
 
@@ -161,15 +168,16 @@ Provide only the direct answer to what was asked.
             if content_block.get("type") == "tool_use":
                 try:
                     tool_result = tool_manager.execute_tool(
-                        content_block["name"],
-                        **content_block["input"]
+                        content_block["name"], **content_block["input"]
                     )
 
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": content_block["id"],
-                        "content": tool_result
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_block["id"],
+                            "content": tool_result,
+                        }
+                    )
                 except Exception as e:
                     print(f"Error executing tool {content_block['name']}: {e}")
                     return None
@@ -180,7 +188,7 @@ Provide only the direct answer to what was asked.
 
         return updated_messages
 
-    def _extract_text_response(self, response: Dict[str, Any]) -> str:
+    def _extract_text_response(self, response: dict[str, Any]) -> str:
         """
         Extract text response from Bedrock API response.
 
