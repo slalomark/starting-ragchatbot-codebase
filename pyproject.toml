@@ -19,6 +19,12 @@ dependencies = [
     "httpx>=0.25.0",
 ]
 
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+    "ruff>=0.13.1",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]
 python_files = ["test_*.py"]
@@ -38,3 +44,46 @@ markers = [
     "slow: Slow running tests",
 ]
 asyncio_mode = "auto"
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # Exclude virtual environment
+  \.venv
+  | venv
+  # Exclude build directories
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+exclude = [
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501", # line too long, handled by black
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend"]

@@ -1,15 +1,15 @@
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from typing import Dict, List, Any
-import sys
 import os
+import sys
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Add the backend directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from models import Course, Lesson, CourseChunk
-from vector_store import SearchResults
 from config import Config
+from models import Course, CourseChunk, Lesson
+from vector_store import SearchResults
 
 
 @pytest.fixture
@@ -31,16 +31,28 @@ def mock_config():
 def sample_course():
     """Sample course data for testing"""
     lessons = [
-        Lesson(lesson_number=1, title="Introduction to Python", lesson_link="https://example.com/lesson1"),
-        Lesson(lesson_number=2, title="Variables and Data Types", lesson_link="https://example.com/lesson2"),
-        Lesson(lesson_number=3, title="Control Structures", lesson_link="https://example.com/lesson3")
+        Lesson(
+            lesson_number=1,
+            title="Introduction to Python",
+            lesson_link="https://example.com/lesson1",
+        ),
+        Lesson(
+            lesson_number=2,
+            title="Variables and Data Types",
+            lesson_link="https://example.com/lesson2",
+        ),
+        Lesson(
+            lesson_number=3,
+            title="Control Structures",
+            lesson_link="https://example.com/lesson3",
+        ),
     ]
 
     return Course(
         title="Python Programming Basics",
         course_link="https://example.com/python-course",
         instructor="John Doe",
-        lessons=lessons
+        lessons=lessons,
     )
 
 
@@ -52,26 +64,26 @@ def sample_course_chunks(sample_course):
             content="Course Python Programming Basics Lesson 1 content: Python is a powerful programming language used for web development, data science, and automation.",
             course_title="Python Programming Basics",
             lesson_number=1,
-            chunk_index=0
+            chunk_index=0,
         ),
         CourseChunk(
             content="Course Python Programming Basics Lesson 1 content: Python was created by Guido van Rossum and first released in 1991.",
             course_title="Python Programming Basics",
             lesson_number=1,
-            chunk_index=1
+            chunk_index=1,
         ),
         CourseChunk(
             content="Course Python Programming Basics Lesson 2 content: Variables in Python are used to store data values. Python has different data types including strings, integers, and floats.",
             course_title="Python Programming Basics",
             lesson_number=2,
-            chunk_index=2
+            chunk_index=2,
         ),
         CourseChunk(
             content="Course Python Programming Basics Lesson 3 content: Control structures like if statements and loops allow you to control the flow of your program.",
             course_title="Python Programming Basics",
             lesson_number=3,
-            chunk_index=3
-        )
+            chunk_index=3,
+        ),
     ]
     return chunks
 
@@ -85,21 +97,18 @@ def sample_search_results(sample_course_chunks):
             {
                 "course_title": chunk.course_title,
                 "lesson_number": chunk.lesson_number,
-                "chunk_index": chunk.chunk_index
-            } for chunk in sample_course_chunks[:2]
+                "chunk_index": chunk.chunk_index,
+            }
+            for chunk in sample_course_chunks[:2]
         ],
-        distances=[0.1, 0.2]
+        distances=[0.1, 0.2],
     )
 
 
 @pytest.fixture
 def empty_search_results():
     """Empty search results for testing"""
-    return SearchResults(
-        documents=[],
-        metadata=[],
-        distances=[]
-    )
+    return SearchResults(documents=[], metadata=[], distances=[])
 
 
 @pytest.fixture
@@ -116,7 +125,9 @@ def mock_vector_store():
     mock_store.get_lesson_link = Mock(return_value="https://example.com/lesson1")
     mock_store.add_course_metadata = Mock()
     mock_store.add_course_content = Mock()
-    mock_store.get_existing_course_titles = Mock(return_value=["Python Programming Basics"])
+    mock_store.get_existing_course_titles = Mock(
+        return_value=["Python Programming Basics"]
+    )
     mock_store.get_course_count = Mock(return_value=1)
     return mock_store
 
@@ -129,14 +140,14 @@ def mock_bedrock_client():
     # Mock successful response without tools
     mock_response_body = {
         "content": [{"text": "This is a test response from Claude."}],
-        "stop_reason": "end_turn"
+        "stop_reason": "end_turn",
     }
 
-    mock_response = {
-        "body": Mock()
-    }
+    mock_response = {"body": Mock()}
     mock_response["body"].read.return_value = Mock()
-    mock_response["body"].read.return_value = str.encode(str(mock_response_body).replace("'", '"'))
+    mock_response["body"].read.return_value = str.encode(
+        str(mock_response_body).replace("'", '"')
+    )
 
     mock_client.invoke_model.return_value = mock_response
     return mock_client
@@ -153,11 +164,11 @@ def mock_tool_use_response():
                 "name": "search_course_content",
                 "input": {
                     "query": "Python variables",
-                    "course_name": "Python Programming"
-                }
+                    "course_name": "Python Programming",
+                },
             }
         ],
-        "stop_reason": "tool_use"
+        "stop_reason": "tool_use",
     }
 
 
@@ -165,8 +176,12 @@ def mock_tool_use_response():
 def mock_final_response():
     """Mock final response after tool execution"""
     return {
-        "content": [{"text": "Based on the search results, variables in Python are used to store data values."}],
-        "stop_reason": "end_turn"
+        "content": [
+            {
+                "text": "Based on the search results, variables in Python are used to store data values."
+            }
+        ],
+        "stop_reason": "end_turn",
     }
 
 
@@ -183,31 +198,37 @@ def mock_session_manager():
 def mock_tool_manager():
     """Mock tool manager for testing"""
     mock_manager = Mock()
-    mock_manager.get_tool_definitions = Mock(return_value=[
-        {
-            "name": "search_course_content",
-            "description": "Search course materials",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string"},
-                    "course_name": {"type": "string"},
-                    "lesson_number": {"type": "integer"}
+    mock_manager.get_tool_definitions = Mock(
+        return_value=[
+            {
+                "name": "search_course_content",
+                "description": "Search course materials",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string"},
+                        "course_name": {"type": "string"},
+                        "lesson_number": {"type": "integer"},
+                    },
+                    "required": ["query"],
                 },
-                "required": ["query"]
             }
-        }
-    ])
+        ]
+    )
     mock_manager.execute_tool = Mock(return_value="Mocked search results")
-    mock_manager.get_last_sources = Mock(return_value=["Python Programming Basics - Lesson 1"])
-    mock_manager.get_last_source_metadata = Mock(return_value=[
-        {
-            "name": "Python Programming Basics - Lesson 1",
-            "course": "Python Programming Basics",
-            "lesson": 1,
-            "link": "https://example.com/lesson1"
-        }
-    ])
+    mock_manager.get_last_sources = Mock(
+        return_value=["Python Programming Basics - Lesson 1"]
+    )
+    mock_manager.get_last_source_metadata = Mock(
+        return_value=[
+            {
+                "name": "Python Programming Basics - Lesson 1",
+                "course": "Python Programming Basics",
+                "lesson": 1,
+                "link": "https://example.com/lesson1",
+            }
+        ]
+    )
     mock_manager.reset_sources = Mock()
     return mock_manager
 
@@ -222,7 +243,7 @@ def course_search_test_cases():
             "course_name": None,
             "lesson_number": None,
             "expected_results": True,
-            "expected_error": None
+            "expected_error": None,
         },
         {
             "name": "successful_search_with_course_filter",
@@ -230,7 +251,7 @@ def course_search_test_cases():
             "course_name": "Python Programming",
             "lesson_number": None,
             "expected_results": True,
-            "expected_error": None
+            "expected_error": None,
         },
         {
             "name": "successful_search_with_lesson_filter",
@@ -238,7 +259,7 @@ def course_search_test_cases():
             "course_name": "Python Programming",
             "lesson_number": 2,
             "expected_results": True,
-            "expected_error": None
+            "expected_error": None,
         },
         {
             "name": "empty_results",
@@ -246,7 +267,7 @@ def course_search_test_cases():
             "course_name": None,
             "lesson_number": None,
             "expected_results": False,
-            "expected_error": None
+            "expected_error": None,
         },
         {
             "name": "invalid_course",
@@ -254,7 +275,7 @@ def course_search_test_cases():
             "course_name": "Nonexistent Course",
             "lesson_number": None,
             "expected_results": False,
-            "expected_error": "No course found matching 'Nonexistent Course'"
+            "expected_error": "No course found matching 'Nonexistent Course'",
         },
         {
             "name": "search_error",
@@ -262,8 +283,8 @@ def course_search_test_cases():
             "course_name": None,
             "lesson_number": None,
             "expected_results": False,
-            "expected_error": "Search error: Test database error"
-        }
+            "expected_error": "Search error: Test database error",
+        },
     ]
 
 
@@ -276,22 +297,22 @@ def ai_generator_test_cases():
             "query": "What is 2+2?",
             "tools": None,
             "expected_tool_use": False,
-            "expected_response_contains": "4"
+            "expected_response_contains": "4",
         },
         {
             "name": "course_content_query_with_tools",
             "query": "Tell me about Python variables",
             "tools": [{"name": "search_course_content"}],
             "expected_tool_use": True,
-            "expected_response_contains": "variables"
+            "expected_response_contains": "variables",
         },
         {
             "name": "general_programming_question",
             "query": "What are the benefits of object-oriented programming?",
             "tools": [{"name": "search_course_content"}],
             "expected_tool_use": False,
-            "expected_response_contains": "object-oriented"
-        }
+            "expected_response_contains": "object-oriented",
+        },
     ]
 
 
@@ -468,15 +489,13 @@ def expected_course_stats():
 
 
 # Utility functions for test setup
-def setup_mock_chroma_results(documents: List[str], metadata: List[Dict], distances: List[float]):
+def setup_mock_chroma_results(
+    documents: list[str], metadata: list[dict], distances: list[float]
+):
     """Helper to create mock ChromaDB results"""
-    return {
-        'documents': [documents],
-        'metadatas': [metadata],
-        'distances': [distances]
-    }
+    return {"documents": [documents], "metadatas": [metadata], "distances": [distances]}
 
 
 def setup_mock_boto3():
     """Helper to patch boto3 client creation"""
-    return patch('boto3.client')
+    return patch("boto3.client")

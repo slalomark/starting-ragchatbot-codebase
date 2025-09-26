@@ -1,13 +1,12 @@
-import pytest
-from unittest.mock import Mock, patch
 from search_tools import CourseSearchTool, ToolManager
-from vector_store import SearchResults
 
 
 class TestCourseSearchTool:
     """Test the CourseSearchTool execute method outputs"""
 
-    def test_successful_search_with_results(self, mock_vector_store, sample_search_results):
+    def test_successful_search_with_results(
+        self, mock_vector_store, sample_search_results
+    ):
         """Test successful search that returns results"""
         mock_vector_store.search.return_value = sample_search_results
         tool = CourseSearchTool(mock_vector_store)
@@ -27,9 +26,7 @@ class TestCourseSearchTool:
         result = tool.execute("variables", course_name="Python Programming")
 
         mock_vector_store.search.assert_called_once_with(
-            query="variables",
-            course_name="Python Programming",
-            lesson_number=None
+            query="variables", course_name="Python Programming", lesson_number=None
         )
         assert "Python Programming Basics" in result
 
@@ -38,12 +35,10 @@ class TestCourseSearchTool:
         mock_vector_store.search.return_value = sample_search_results
         tool = CourseSearchTool(mock_vector_store)
 
-        result = tool.execute("variables", course_name="Python Programming", lesson_number=2)
+        tool.execute("variables", course_name="Python Programming", lesson_number=2)
 
         mock_vector_store.search.assert_called_once_with(
-            query="variables",
-            course_name="Python Programming",
-            lesson_number=2
+            query="variables", course_name="Python Programming", lesson_number=2
         )
 
     def test_empty_search_results(self, mock_vector_store, empty_search_results):
