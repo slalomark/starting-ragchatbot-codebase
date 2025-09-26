@@ -1,14 +1,14 @@
+
 import pytest
-from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
-import json
 
 
 @pytest.mark.api
 class TestQueryEndpoint:
     """Test cases for /api/query endpoint"""
 
-    def test_query_with_session_id(self, client, sample_query_request, expected_query_response):
+    def test_query_with_session_id(
+        self, client, sample_query_request, expected_query_response
+    ):
         """Test query endpoint with provided session ID"""
         response = client.post("/api/query", json=sample_query_request)
 
@@ -19,12 +19,16 @@ class TestQueryEndpoint:
         assert data["sources"] == expected_query_response["sources"]
         assert data["session_id"] == expected_query_response["session_id"]
         assert len(data["source_metadata"]) == 1
-        assert data["source_metadata"][0]["name"] == "Python Programming Basics - Lesson 1"
+        assert (
+            data["source_metadata"][0]["name"] == "Python Programming Basics - Lesson 1"
+        )
         assert data["source_metadata"][0]["course"] == "Python Programming Basics"
         assert data["source_metadata"][0]["lesson"] == 1
         assert data["source_metadata"][0]["link"] == "https://example.com/lesson1"
 
-    def test_query_without_session_id(self, client, sample_query_request_no_session, mock_rag_system):
+    def test_query_without_session_id(
+        self, client, sample_query_request_no_session, mock_rag_system
+    ):
         """Test query endpoint without session ID (should create new session)"""
         response = client.post("/api/query", json=sample_query_request_no_session)
 
@@ -60,12 +64,14 @@ class TestQueryEndpoint:
         response = client.post(
             "/api/query",
             data="invalid json",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 422
 
-    def test_query_rag_system_error(self, client, sample_query_request, mock_rag_system):
+    def test_query_rag_system_error(
+        self, client, sample_query_request, mock_rag_system
+    ):
         """Test query endpoint when RAG system raises an error"""
         mock_rag_system.query.side_effect = Exception("RAG system error")
 
@@ -74,9 +80,13 @@ class TestQueryEndpoint:
         assert response.status_code == 500
         assert "RAG system error" in response.json()["detail"]
 
-    def test_query_session_manager_error(self, client, sample_query_request_no_session, mock_rag_system):
+    def test_query_session_manager_error(
+        self, client, sample_query_request_no_session, mock_rag_system
+    ):
         """Test query endpoint when session manager raises an error"""
-        mock_rag_system.session_manager.create_session.side_effect = Exception("Session error")
+        mock_rag_system.session_manager.create_session.side_effect = Exception(
+            "Session error"
+        )
 
         response = client.post("/api/query", json=sample_query_request_no_session)
 
@@ -125,7 +135,7 @@ class TestCoursesEndpoint:
         """Test courses endpoint with no courses"""
         mock_rag_system.get_course_analytics.return_value = {
             "total_courses": 0,
-            "course_titles": []
+            "course_titles": [],
         }
 
         response = client.get("/api/courses")
@@ -190,18 +200,17 @@ class TestAPIIntegration:
         session_id = "test-session-persistent"
 
         # First query
-        response1 = client.post("/api/query", json={
-            "query": "What is Python?",
-            "session_id": session_id
-        })
+        response1 = client.post(
+            "/api/query", json={"query": "What is Python?", "session_id": session_id}
+        )
         assert response1.status_code == 200
         assert response1.json()["session_id"] == session_id
 
         # Second query with same session
-        response2 = client.post("/api/query", json={
-            "query": "What are variables?",
-            "session_id": session_id
-        })
+        response2 = client.post(
+            "/api/query",
+            json={"query": "What are variables?", "session_id": session_id},
+        )
         assert response2.status_code == 200
         assert response2.json()["session_id"] == session_id
 
@@ -211,7 +220,6 @@ class TestAPIIntegration:
     def test_concurrent_requests(self, client, sample_query_request):
         """Test handling of concurrent requests"""
         import concurrent.futures
-        import threading
 
         def make_request():
             return client.post("/api/query", json=sample_query_request)
@@ -239,7 +247,7 @@ class TestAPIErrorHandling:
         response = client.post(
             "/api/query",
             data='{"query": "test", invalid}',
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 422
 
@@ -265,10 +273,9 @@ class TestAPIErrorHandling:
         """Test handling of very large query payload"""
         large_query = "x" * 10000  # 10KB query
 
-        response = client.post("/api/query", json={
-            "query": large_query,
-            "session_id": "test-large"
-        })
+        response = client.post(
+            "/api/query", json={"query": large_query, "session_id": "test-large"}
+        )
 
         # Should handle large payloads gracefully
         assert response.status_code in [200, 413]  # OK or Payload Too Large
@@ -311,7 +318,7 @@ class TestAPIContentTypes:
         response = client.post(
             "/api/query",
             json=sample_query_request,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 200
@@ -322,7 +329,10 @@ class TestAPIContentTypes:
         response = client.options("/api/query")
 
         # CORS headers should be present due to middleware
-        assert response.status_code in [200, 405]  # OPTIONS might not be explicitly handled
+        assert response.status_code in [
+            200,
+            405,
+        ]  # OPTIONS might not be explicitly handled
 
     def test_response_encoding(self, client, sample_query_request):
         """Test response encoding is UTF-8"""
